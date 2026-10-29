@@ -1,0 +1,7 @@
+const tabs=[...document.querySelectorAll('[role=tab]')];
+function selectTab(index){tabs.forEach((tab,i)=>{tab.setAttribute('aria-selected',String(i===index));tab.tabIndex=i===index?0:-1;document.getElementById(tab.getAttribute('aria-controls')).hidden=i!==index;});}
+tabs.forEach((tab,i)=>{tab.addEventListener('click',()=>selectTab(i));tab.addEventListener('keydown',e=>{let next;if(e.key==='ArrowRight')next=(i+1)%tabs.length;if(e.key==='ArrowLeft')next=(i+tabs.length-1)%tabs.length;if(e.key==='Home')next=0;if(e.key==='End')next=tabs.length-1;if(next!==undefined){e.preventDefault();selectTab(next);tabs[next].focus();}});});
+const viewer=document.getElementById('viewer'),full=document.getElementById('full-image'),zoom=document.getElementById('zoom');
+document.querySelectorAll('[data-board]').forEach(button=>button.addEventListener('click',()=>{const path='assets/process/'+button.dataset.board+'-full.png';full.src=path;full.alt=button.dataset.title;full.classList.remove('zoomed');zoom.textContent='Zoom to detail';document.getElementById('viewer-title').textContent=button.dataset.title;document.getElementById('original').href=path;viewer.showModal();document.querySelector('.viewer-scroll').scrollTo(0,0);}));
+zoom.addEventListener('click',()=>{full.classList.toggle('zoomed');zoom.textContent=full.classList.contains('zoomed')?'Fit to window':'Zoom to detail';});
+document.getElementById('close').addEventListener('click',()=>viewer.close());viewer.addEventListener('click',e=>{if(e.target===viewer)viewer.close();});

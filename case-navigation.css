@@ -1,0 +1,7 @@
+/* Match the main pages' navigation while preserving each case-study hero. */
+.case-hero header.centered-header{position:relative;z-index:2;display:flex;justify-content:center;align-items:center;width:100%;padding:48px 48px 24px;font-size:16px}
+.case-hero header.centered-header nav{display:flex;justify-content:center;align-items:center;gap:44px;max-width:none;flex-wrap:nowrap;font-size:inherit}
+.case-hero header.centered-header .brand{font-weight:500;white-space:nowrap;color:inherit}
+@media(max-width:900px){.case-hero header.centered-header{padding:32px 28px 24px}}
+@media(max-width:700px){.case-hero header.centered-header{padding:28px 16px 20px;font-size:12px}.case-hero header.centered-header nav{gap:clamp(12px,3vw,22px)}.case-hero header.centered-header .brand{font-size:13px}}
+@media(max-width:360px){.case-hero header.centered-header nav{gap:10px;font-size:11px}.case-hero header.centered-header .brand{font-size:12px}}

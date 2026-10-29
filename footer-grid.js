@@ -1,6 +1,7 @@
 (() => {
   const footer = document.querySelector('footer');
-  const canvas = footer.querySelector('.footer-hover-grid');
+  const canvas = footer.querySelector('.footer-hover-grid') || footer.insertBefore(document.createElement('canvas'),footer.firstChild);
+  canvas.className='footer-hover-grid';canvas.setAttribute('aria-hidden','true');
   const ctx = canvas.getContext('2d');
   let cells = [], width = 0, height = 0, pointer = null, previous = null, frame = 0;
   function hash(x,y) { const n = Math.sin(x*127.1+y*311.7)*43758.5453; return n-Math.floor(n); }

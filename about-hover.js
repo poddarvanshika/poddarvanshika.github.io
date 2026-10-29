@@ -14,8 +14,7 @@
   function resize() {
     const pr=page.getBoundingClientRect();
     width=document.documentElement.clientWidth;
-    const title=intro.querySelector('.intro-title').getBoundingClientRect(),photos=intro.querySelector('.photo-carousel').getBoundingClientRect(),education=intro.querySelector('.education').getBoundingClientRect();
-    height=Math.min(education.top-1,Math.max(title.bottom,photos.bottom)+24)-pr.top;
+    height=intro.querySelector('.intro-portrait').getBoundingClientRect().bottom-pr.top+12;
     canvas.style.left=(-pr.left)+'px';canvas.style.width=width+'px';canvas.style.height=height+'px';
     page.style.setProperty('--viewport-width',width+'px');page.style.setProperty('--page-offset',pr.left+'px');
     const dpr=Math.min(devicePixelRatio||1,2);
