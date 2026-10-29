@@ -1,0 +1,20 @@
+/* The entrance is temporary; the real page is always underneath it. */
+html{scrollbar-gutter:stable}
+html.intro-pending{overflow:hidden}
+html.intro-pending:not(.intro-running)::before{content:"";position:fixed;inset:0;background:#121212;z-index:2147483000;animation:intro-failsafe 0s 10s forwards}
+@keyframes intro-failsafe{to{visibility:hidden;pointer-events:none}}
+.portfolio-intro{position:fixed;inset:0;z-index:2147483000;isolation:isolate;cursor:default!important}
+.portfolio-intro canvas{display:block;width:100%;height:100%;pointer-events:none}
+.portfolio-intro button,.intro-preview button,.intro-preview a{font:400 13px/1.4 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;cursor:pointer!important}
+.portfolio-intro .intro-skip{position:absolute;right:24px;bottom:24px;color:#aaa;background:#191919cc;border:1px solid #363636;border-radius:7px;padding:9px 14px}
+.portfolio-intro .intro-loading-label{position:absolute;top:calc(50% + 132px);left:50%;transform:translateX(-50%);color:#aaa;font:400 13px/1.4 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;letter-spacing:.02em}.portfolio-intro .intro-loading-label[hidden]{display:none}
+.portfolio-intro .intro-status{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.portfolio-intro button:focus-visible,.intro-preview button:focus-visible,.intro-preview a:focus-visible{outline:2px solid #a6a6c8;outline-offset:4px}
+.intro-preview{overflow-x:auto;position:fixed;z-index:2147483001;left:50%;bottom:22px;transform:translateX(-50%);display:flex;align-items:center;gap:6px;padding:7px;background:#1d1d1deF;border:1px solid #363636;border-radius:12px;box-shadow:0 6px 24px #0002;color:#bbb;max-width:calc(100% - 32px)}
+.intro-preview button,.intro-preview a{color:inherit;background:transparent;border:0;border-radius:6px;padding:8px 11px;white-space:nowrap;text-decoration:none}
+.intro-preview button:hover,.intro-preview a:hover{color:#eee;background:#303030}
+.intro-preview button[aria-pressed="true"]{color:#eee;background:#34343b}
+.intro-preview .intro-preview-replay{color:#eee}
+.intro-preview span{font:400 11px/1 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#888;padding:0 8px;white-space:nowrap}
+@media(max-width:600px){.intro-preview{bottom:16px;gap:0;padding:5px}.intro-preview span{display:none}.intro-preview button,.intro-preview a{padding:8px}.portfolio-intro .intro-skip{right:16px;bottom:76px}}
+@media(prefers-reduced-motion:reduce){.portfolio-intro *{animation:none!important;transition:none!important}}

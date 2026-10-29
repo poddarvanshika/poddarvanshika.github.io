@@ -1,24 +1,14 @@
 (() => {
- const stack=document.querySelector('.photo-stack'), photos=[...stack.querySelectorAll('img')], dots=[...document.querySelectorAll('[data-slide]')], status=document.querySelector('#photo-status');
- let current=0;
- function show(index){current=(index+5)%5;photos.forEach((photo,i)=>{const depth=(i-current+5)%5;photo.style.zIndex=5-depth;photo.style.setProperty('--rotation',[2,-3,4,-2,1][depth]+'deg');photo.style.setProperty('--x',[0,-7,5,-3,2][depth]+'px');photo.style.setProperty('--y',(-depth*3)+'px');photo.style.setProperty('--scale',1-depth*.012);photo.setAttribute('aria-hidden',String(depth!==0));});dots.forEach((dot,i)=>dot.setAttribute('aria-pressed',String(i===current)));status.textContent=`Photograph ${current+1} of 5`;}
- stack.addEventListener('click',()=>show(current+1));stack.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();show(current+(e.key==='ArrowRight'?1:-1));}if(e.key==='Home'){e.preventDefault();show(0);}if(e.key==='End'){e.preventDefault();show(4);}});dots.forEach((dot,i)=>dot.addEventListener('click',()=>show(i)));show(0);
- const toggle=document.querySelector('#theme-toggle');function theme(){const dark=window.portfolioTheme.get()==='dark';toggle.setAttribute('aria-checked',String(dark));toggle.title=dark?'Switch to light mode':'Switch to dark mode';schedule();}toggle.addEventListener('click',()=>window.portfolioTheme.set(window.portfolioTheme.get()==='dark'?'light':'dark'));
+ function theme(){schedule();}
  const canvas=document.querySelector('#about-artwork'),ctx=canvas.getContext('2d'),steps=[...document.querySelectorAll('.story-step')],section=document.querySelector('.beyond'),reduced=matchMedia('(prefers-reduced-motion: reduce)');
- const SIZE=300,VIEW=450,OFFSET=(VIEW-SIZE)/2,CELL=3,clamp=v=>Math.max(0,Math.min(1,v)),smooth=v=>{v=clamp(v);return v*v*(3-2*v);},lerp=(a,b,t)=>a+(b-a)*t;
+ const SIZE=300,VIEW=600,OFFSET=(VIEW-SIZE)/2,CELL=3,clamp=v=>Math.max(0,Math.min(1,v)),smooth=v=>{v=clamp(v);return v*v*(3-2*v);},lerp=(a,b,t)=>a+(b-a)*t;
  canvas.width=canvas.height=VIEW*2;ctx.scale(2,2);
  let forms=[],frame=0;
- function fitToggle(){
-  const word=document.querySelector('#hello-word'),last=word.getBoundingClientRect(),hr=document.querySelector('.intro-title').getBoundingClientRect(),style=getComputedStyle(word),c=document.createElement('canvas').getContext('2d');
-  c.font=`${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-  const m=c.measureText('s'),ascent=m.actualBoundingBoxAscent,descent=m.actualBoundingBoxDescent,fontAscent=m.fontBoundingBoxAscent||parseFloat(style.fontSize)*.8,fontDescent=m.fontBoundingBoxDescent||parseFloat(style.fontSize)*.2,glyphHeight=ascent+descent,height=Math.max(34,glyphHeight);
-  toggle.style.setProperty('--switch-height',height+'px');toggle.style.left=(last.right-hr.left+16)+'px';toggle.style.top=(last.top-hr.top+(last.height-fontAscent-fontDescent)/2+fontAscent-ascent-(height-glyphHeight)/2)+'px';
- }
- fitToggle();document.fonts.ready.then(()=>{fitToggle();schedule();});
+ document.fonts.ready.then(schedule);
  // The supplied patterns define the occupied cells. Only cells are painted to the visible canvas.
  // Keep the flower dot, tennis ball, and yoga head in a separate, persistent correspondence group.
  async function samplePattern(name,landmark){
-  const source=new Image();source.src=`assets/about/${name}-pattern.png`;await source.decode();
+  const source=new Image();source.src=window.aboutPatternSources[name];await source.decode();
   const off=document.createElement('canvas');off.width=off.height=SIZE;const c=off.getContext('2d',{willReadFrequently:true});
   const scale=262/Math.max(source.naturalWidth,source.naturalHeight),dx=(SIZE-source.naturalWidth*scale)/2,dy=(SIZE-source.naturalHeight*scale)/2;
   c.drawImage(source,dx,dy,source.naturalWidth*scale,source.naturalHeight*scale);
@@ -62,7 +52,15 @@
   if(!forms.length)return {top:OFFSET,bottom:SIZE+OFFSET,scale:1};
   let [from,to,t]=stateAt(progress);if(reduced.matches){from=to=t<.5?from:to;t=0;}
   const dark=document.documentElement.dataset.theme==='dark',source=forms[from],target=forms[to],gather=Math.sin(Math.PI*t)*.09;
-  const scale=lerp(from===0?1:1.5,to===0?1:1.5,t);
+  const cssHeight=canvas.getBoundingClientRect().height;
+  const formScale=index=>{
+   if(index===0)return .75;
+   const visible=forms[index].points.filter(p=>p.a>=.015);
+   const ys=visible.map(p=>p.y);
+   const height=Math.max(...ys)-Math.min(...ys)+CELL*.9;
+   return 120*VIEW/(cssHeight*height);
+  };
+  const scale=lerp(formScale(from),formScale(to),t);
   ctx.clearRect(0,0,VIEW,VIEW);let top=VIEW,bottom=0;
   source.points.forEach((p,i)=>{
    const q=target.points[i];
@@ -80,23 +78,75 @@
  }
  function render(){
   frame=0;
-  const mobile=innerWidth<=700,art=canvas.getBoundingClientRect(),bounds=section.getBoundingClientRect(),anchor=art.top+art.height/2;
+  const mobile=innerWidth<=700, pin=canvas.parentElement;
+  if(forms.length){
+   const lotusBottom=Math.max(...forms[0].points.filter(p=>p.a>=.015).map(p=>VIEW/2+(p.y-SIZE/2)*.75+CELL*.75*.45));
+   const pinHeight=pin.offsetHeight,canvasHeight=pinHeight*2;
+   const labelTop=-pinHeight*.5+lotusBottom/VIEW*canvasHeight+16;
+   section.style.setProperty('--lotus-label-top',labelTop+'px');
+  }
+  const bounds=section.getBoundingClientRect();
+  if(!mobile){
+   const dockCenter=section.offsetHeight-100;
+   const center=Math.min(dockCenter,Math.max(55,innerHeight*.5-bounds.top));
+   // One pixel of document travel per pixel scrolled, through the final yoga pose.
+   pin.style.transform=`translateY(${center-55}px)`;
+  }else pin.style.transform='';
+  const art=canvas.getBoundingClientRect(),anchor=art.top+art.height/2;
   const centers=steps.map(step=>{const r=step.getBoundingClientRect();return r.top+r.height/2;});
-  let progress=0;for(let i=0;i<centers.length-1;i++)if(anchor>=centers[i])progress=i+clamp((anchor-centers[i])/(centers[i+1]-centers[i]));if(anchor>=centers[steps.length-1])progress=steps.length-1;
-  const occupied=paint(progress),artBottom=art.top+occupied.bottom/VIEW*art.height;
-  const baseSize=art.width/1.5,formWidth=baseSize*occupied.scale;
-  const pinTop=innerHeight*(mobile?.25:.5)-baseSize/2,pinned=bounds.top<=pinTop+.5;
+  let progress=0;
+  for(let i=0;i<centers.length-1;i++)if(anchor>=centers[i])progress=i+clamp((anchor-centers[i])/(centers[i+1]-centers[i]));
+  if(anchor>=centers.at(-1))progress=steps.length-1;
+  // The added childhood row holds the lotus; the original morph timing follows it.
+  const title=steps[0].querySelector('h2'),titleRange=document.createRange();
+  titleRange.selectNodeContents(title);
+  const guide=titleRange.getBoundingClientRect();
+  // The lotus retains its introductory size throughout its travel.
+  const occupied=paint(Math.max(0,progress-1));
+  const artBottom=art.top+occupied.bottom/VIEW*art.height;
+  const focusLine=mobile?innerHeight*.45:anchor;
+  const nearest=Math.max(1,steps.reduce((best,step,i)=>{
+   if(!i)return best;
+   const r=step.getBoundingClientRect(),distance=Math.abs(r.top+step.querySelector('.story-copy').offsetHeight/2-focusLine);
+   const bestRect=steps[best].getBoundingClientRect(),bestDistance=Math.abs(bestRect.top+steps[best].querySelector('.story-copy').offsetHeight/2-focusLine);
+   return distance<bestDistance?i:best;
+  },1));
   steps.forEach((step,i)=>{
-   const copy=step.querySelector('.story-copy'),r=step.getBoundingClientRect(),gap=r.top-artBottom;
-   const travel=clamp((20-gap)/100);
-   let move=pinned?(mobile?smooth((20-gap)/20):travel*(2-travel)):0;if(reduced.matches&&move>0)move=1;
-   const full=Math.min(580,bounds.width),side=Math.max(100,(bounds.width-formWidth)/2-24),width=mobile?full:lerp(full,Math.min(full,side),move);
-   copy.style.width=width+'px';copy.style.setProperty('--shift',((i%2?1:-1)*(mobile?12:(formWidth/2+24+width/2))*move)+'px');
-   // On narrow screens the narrative stays readable below the artwork instead of becoming thin columns.
-   copy.style.opacity=mobile?1-move:1;
-   step.dataset.clearance=gap.toFixed(2);step.dataset.yield=move.toFixed(3);
+   if(!i)return;
+   const copy=step.querySelector('.story-copy'),photo=step.querySelector('.story-photo'),r=step.getBoundingClientRect();
+   photo.style.setProperty('--photo-width',photo.offsetWidth+'px');
+   const gap=r.top-artBottom;
+   const t=reduced.matches||mobile?1:smooth((20-gap)/260);
+   step.dataset.clearance=gap.toFixed(2);
+   const side=i%2?1:-1;
+   const width=mobile?bounds.width:Math.min(580,(bounds.width-guide.width)/2-16);
+   copy.style.width=width+'px';
+   // Measure the heading's ink, not the paragraph box, against the title's edges.
+   const headingRange=document.createRange(),headingText=copy.querySelector('h2').firstChild;
+   const edge=side>0?0:headingText.length-1;
+   headingRange.setStart(headingText,edge);headingRange.setEnd(headingText,edge+1);
+   const ink=headingRange.getBoundingClientRect(),box=copy.getBoundingClientRect();
+   const center=bounds.left+bounds.width/2;
+   const endX=side>0?guide.right-(center-width/2+ink.left-box.left):guide.left-(center-width/2+ink.right-box.left);
+   // Keep the photo 16px from the visible text, rather than its wider layout box.
+   const textRects=[...copy.querySelectorAll('h2,p')].map(el=>{
+    const range=document.createRange();range.selectNodeContents(el);return range.getBoundingClientRect();
+   });
+   const textEdge=side>0?Math.max(...textRects.map(rect=>rect.right)):Math.min(...textRects.map(rect=>rect.left));
+   const startX=textEdge-box.left-width/2+side*(16+photo.offsetWidth/2);
+   copy.style.transform=`translateX(${mobile?0:endX*t}px)`;
+   const photoX=mobile?0:lerp(startX,endX,t);
+   const distance=Math.abs(r.top+copy.offsetHeight/2-focusLine);
+   const emphasis=i===nearest?1:.62+.38*(1-smooth(distance/340));
+   copy.style.opacity=String(reduced.matches?1:emphasis);
+   step.dataset.active=String(i===nearest);
+   const endY=copy.offsetHeight+16;
+   const startY=(copy.offsetHeight-photo.offsetHeight)/2;
+   photo.style.transform=`translate(${photoX}px,${lerp(startY,endY,t)}px)`;
+   step.dataset.yield=t.toFixed(3);
   });
  }
  function schedule(){if(!frame)frame=requestAnimationFrame(render);}
- window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',()=>{fitToggle();schedule();});window.addEventListener('portfolio-theme-change',theme);reduced.addEventListener('change',schedule);theme();
+ window.addEventListener('load',schedule);
+ window.addEventListener('scroll',schedule,{passive:true});window.addEventListener('resize',()=>{schedule();});window.addEventListener('portfolio-theme-change',theme);reduced.addEventListener('change',schedule);theme();
 })();
